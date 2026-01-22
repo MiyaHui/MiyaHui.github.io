@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miya Hui | Product Manager</title>
+    <meta name="description" content="Portfolio of Miya Hui, a Product Manager building iOS apps and AI-powered tools.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- React & ReactDOM (UMD for standalone usage) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel (To compile JSX in the browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            /* Slate-50 */
+            color: #1e293b;
+            /* Slate-800 */
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "recharts": "https://esm.sh/recharts@^3.7.0"
+  }
+}
+</script>
+    <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- CONSTANTS & DATA ---
+
+        const PERSONAL_INFO = {
+            name: "Miya Hui",
+            role: "Product Manager",
+            tagline: "Building intuitive products that solve complex user problems.",
+            email: "miyakoxu81@gmail.com",
+            socials: {
+                twitter: "",
+                linkedin: "",
+                github: "https://github.com/MiyaHui",
+                medium: ""
+            }
+        };
+
+        const IOS_APPS = [
+            {
+                id: '1',
+                name: 'FocusFlow',
+                category: 'Productivity',
+                iconUrl: 'https://picsum.photos/id/1015/200/200',
+                storeUrl: '#'
+            },
+            {
+                id: '2',
+                name: 'Habitify',
+                category: 'Health & Fitness',
+                iconUrl: 'https://picsum.photos/id/1025/200/200',
+                storeUrl: '#'
+            },
+            {
+                id: '3',
+                name: 'MindMap Pro',
+                category: 'Business',
+                iconUrl: 'https://picsum.photos/id/1035/200/200',
+                storeUrl: '#'
+            }
+        ];
+
+        const GITHUB_REPOS = [
+            {
+                id: '1',
+                name: 'pm-metrics-cli',
+                description: 'A CLI tool for tracking product KPIs directly from your terminal. Connects to Mixpanel and Amplitude.',
+                language: 'Python',
+                stars: 1240,
+                url: '#'
+            },
+            {
+                id: '2',
+                name: 'swift-ui-kits',
+                description: 'Open source collection of SwiftUI components for rapid prototyping mobile apps.',
+                language: 'Swift',
+                stars: 856,
+                url: '#'
+            },
+            {
+                id: '3',
+                name: 'user-journey-map',
+                description: 'React component for visualizing complex user flows and identifying drop-off points.',
+                language: 'TypeScript',
+                stars: 2105,
+                url: '#'
+            },
+            {
+                id: '4',
+                name: 'roadmap-gen',
+                description: 'AI-powered roadmap generator that parses Jira backlogs into visual timelines.',
+                language: 'JavaScript',
+                stars: 432,
+                url: '#'
+            }
+        ];
+
+        const SKILLS = [
+            { name: 'Strategy', iconClass: 'fa-solid fa-chess' },
+            { name: 'Analytics', iconClass: 'fa-solid fa-chart-line' },
+            { name: 'Procedure Mgmt', iconClass: 'fa-solid fa-clipboard-list' },
+            { name: 'Agile', iconClass: 'fa-solid fa-arrows-spin' }
+        ];
+
+        // --- COMPONENTS ---
+
+        const BentoCard = ({ children, className = "", title, icon, iconColor = "text-teal-700" }) => {
+            return (
+                <div className={`bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-teal-900/5 transition-all duration-300 hover:scale-[1.005] hover:border-teal-100 flex flex-col ${className}`}>
+                    {(title || icon) && (
+                        <div className="flex items-center gap-3 mb-5 text-slate-800">
+                            {icon && (
+                                <div className={`w-8 h-8 rounded-lg ${iconColor} bg-opacity-10 bg-current flex items-center justify-center`}>
+                                    <i className={`${icon} ${iconColor}`}></i>
+                                </div>
+                            )}
+                            {title && <h2 className="text-xl font-bold tracking-tight">{title}</h2>}
+                        </div>
+                    )}
+                    <div className="flex-1">
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        const SocialLink = ({ href, icon }) => (
+            <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-emerald-100 hover:bg-emerald-400 hover:text-teal-950 transition-all border border-white/10 backdrop-blur-sm"
+            >
+                <i className={icon}></i>
+            </a>
+        );
+
+        const Hero = () => {
+            return (
+                <BentoCard className="h-full justify-between bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white border-none shadow-teal-900/20 shadow-xl">
+                    <div className="flex flex-col h-full justify-between">
+                        <div className="max-w-2xl">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-lg transform -rotate-2 border-2 border-emerald-400/50">
+                                <img src="./IMG_5473.jpg" alt="MH" />
+                            </div>
+                            <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+                                Hi, I'm {PERSONAL_INFO.name}.
+                            </h1>
+                            <p className="text-xl text-emerald-50 leading-relaxed font-medium">
+                                {PERSONAL_INFO.role} building <span className="text-white font-bold border-b-2 border-emerald-400">mobile experiences</span> and <span className="text-white font-bold border-b-2 border-emerald-400">developer tools</span>.
+                            </p>
+                        </div>
+
+                        <div className="mt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                            <a
+                                href={`mailto:${PERSONAL_INFO.email}`}
+                                className="inline-flex items-center gap-2 bg-emerald-400 text-teal-950 px-6 py-3 rounded-full font-bold hover:bg-emerald-300 transition-colors shadow-lg shadow-emerald-900/20"
+                            >
+                                <i className="fa-solid fa-envelope"></i>
+                                Contact Me
+                            </a>
+
+                            <div className="flex gap-2">
+                                <SocialLink href={PERSONAL_INFO.socials.linkedin} icon="fa-brands fa-linkedin" />
+                                <SocialLink href={PERSONAL_INFO.socials.twitter} icon="fa-brands fa-twitter" />
+                                <SocialLink href={PERSONAL_INFO.socials.github} icon="fa-brands fa-github" />
+                            </div>
+                        </div>
+                    </div>
+                </BentoCard>
+            );
+        };
+
+        const Skills = () => {
+            return (
+                <BentoCard className="h-full bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white border-none shadow-orange-500/20 shadow-xl">
+                    <div className="flex flex-col justify-center h-full gap-4">
+                        <h3 className="font-bold text-white mb-1 flex items-center gap-2 text-shadow-sm">
+                            <i className="fa-solid fa-bolt text-white"></i>
+                            Core Skills
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {SKILLS.map((skill) => (
+                                <div key={skill.name} className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/20 backdrop-blur-md hover:bg-white/30 transition-colors border border-white/20 shadow-sm">
+                                    <i className={`${skill.iconClass} text-xl mb-2 text-white`}></i>
+                                    <span className="text-xs font-bold text-white tracking-wide">{skill.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </BentoCard>
+            );
+        };
+
+        const IOSApps = () => {
+            return (
+                <BentoCard title="iOS Portfolio" icon="fa-brands fa-apple" iconColor="text-slate-800" className="h-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {IOS_APPS.map((app) => (
+                            <div key={app.id} className="group relative flex items-center gap-4 p-4 rounded-2xl hover:bg-teal-50/50 transition-all border border-transparent hover:border-teal-100">
+                                <img
+                                    src={app.iconUrl}
+                                    alt={app.name}
+                                    className="w-16 h-16 rounded-2xl shadow-sm group-hover:shadow-lg group-hover:shadow-teal-900/10 transition-all object-cover"
+                                />
+                                <div className="flex flex-col">
+                                    <h3 className="font-bold text-slate-900 text-lg">{app.name}</h3>
+                                    <span className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">{app.category}</span>
+                                    <a href={app.storeUrl} className="text-teal-600 text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all group-hover:text-teal-700">
+                                        Get <i className="fa-solid fa-chevron-right text-[10px]"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </BentoCard>
+            );
+        };
+
+        const GithubRepos = () => {
+            const getLangColor = (lang) => {
+                switch (lang.toLowerCase()) {
+                    case 'typescript': return 'bg-blue-100 text-blue-700 border-blue-200';
+                    case 'javascript': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                    case 'python': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                    case 'swift': return 'bg-orange-100 text-orange-700 border-orange-200';
+                    default: return 'bg-slate-100 text-slate-700 border-slate-200';
+                }
+            };
+
+            return (
+                <BentoCard title="Open Source" icon="fa-brands fa-github" iconColor="text-slate-900" className="h-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {GITHUB_REPOS.map((repo) => (
+                            <a key={repo.id} href={repo.url} className="block group">
+                                <div className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-teal-300 hover:shadow-lg hover:shadow-teal-900/5 transition-all h-full flex flex-col">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h3 className="font-bold text-lg text-slate-900 group-hover:text-teal-700 transition-colors">
+                                            {repo.name}
+                                        </h3>
+                                        <div className="flex items-center gap-1.5 text-slate-500 font-medium text-sm bg-slate-50 px-2 py-1 rounded-lg">
+                                            <i className="fa-solid fa-star text-amber-400 text-xs"></i>
+                                            <span>{repo.stars}</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-600 mb-5 flex-1 leading-relaxed">
+                                        {repo.description}
+                                    </p>
+                                    <div className="flex items-center">
+                                        <span className={`text-xs px-3 py-1 rounded-full font-bold border ${getLangColor(repo.language)}`}>
+                                            {repo.language}
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </BentoCard>
+            );
+        };
+
+        const Footer = () => {
+            return (
+                <footer className="w-full py-6 text-center border-t border-gray-200">
+                    <p className="text-sm text-gray-500">
+                        &copy; {new Date().getFullYear()} {PERSONAL_INFO.name}. All rights reserved.
+                    </p>
+                    <a
+                        href={`mailto:${PERSONAL_INFO.email}`}
+                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors mt-2 inline-block"
+                    >
+                        {PERSONAL_INFO.email}
+                    </a>
+                </footer>
+            );
+        };
+
+        const App = () => {
+            return (
+                <div className="min-h-screen p-4 md:p-8 flex justify-center">
+                    <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-auto">
+
+                        {/* Row 1: Hero (Span 3) + Skills (Span 1) */}
+                        <div className="md:col-span-3 md:row-span-1">
+                            <Hero />
+                        </div>
+                        <div className="md:col-span-1 md:row-span-1">
+                            <Skills />
+                        </div>
+
+                        {/* Row 2: iOS Apps (Span 4) */}
+                        <div className="md:col-span-4">
+                            <IOSApps />
+                        </div>
+
+                        {/* Row 3: Github Projects (Span 4) */}
+                        <div className="md:col-span-4">
+                            <GithubRepos />
+                        </div>
+
+                        {/* Footer */}
+                        <div className="md:col-span-4 mt-8">
+                            <Footer />
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+    <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
