@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>互动 Agent | Me Agent</title>
+  <style>
+    /* Reset & Fonts */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); }
+
+    /* Playground Background */
+    .playground {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: radial-gradient(rgba(255,255,255,0.4) 2px, transparent 2px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    /* Chat UI - Glassmorphism */
+    .chat-container {
+      position: absolute;
+      right: 5vw;
+      bottom: 5vh;
+      width: 380px;
+      height: 80vh;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.4);
+      text-align: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: #333;
+      background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 6px; }
+
+    .msg-row { display: flex; width: 100%; align-items: flex-end; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.agent { justify-content: flex-start; gap: 10px; }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background-color: #fff;
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .user .bubble {
+      background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .agent .bubble {
+      background: rgba(255,255,255,0.95);
+      color: #2c2c2c;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input-area {
+      padding: 16px;
+      background: rgba(255,255,255,0.6);
+      border-top: 1px solid rgba(255,255,255,0.5);
+      display: flex;
+      gap: 12px;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.85);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .chat-input-area input:focus {
+      border-color: #007AFF;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+      color: white;
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 10px rgba(0,122,255,0.3);
+    }
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,122,255,0.4);
+    }
+    .send-btn:active { transform: translateY(1px) scale(0.95); }
+    .send-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* Typing Indicator */
+    .typing .dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: #aaa; margin: 0 3px;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing .dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* Baby Character */
+    #baby-container {
+      position: absolute;
+      top: 50%; left: 20%;
+      width: 140px; /* generous bounding box */
+      height: 140px;
+      margin-left: -70px;
+      margin-top: -70px;
+      z-index: 5;
+      transition: transform 0s linear; /* speed controlled via JS */
+      pointer-events: none;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+    }
+
+    .baby-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    }
+
+    /* Baby Image */
+    .baby-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      animation: baby-float 2s infinite alternate ease-in-out;
+      transform-origin: center center;
+    }
+
+    /* Crawling Animation - Active */
+    .crawling .baby-image { 
+      animation: baby-crawl 0.4s infinite alternate ease-in-out; 
+    }
+    
+    .celebrate .baby-inner {
+      animation: jump 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes baby-float { 
+      from { transform: translateY(0) rotate(-2deg); } 
+      to { transform: translateY(-5px) rotate(2deg); } 
+    }
+    
+    @keyframes baby-crawl { 
+      from { transform: translateY(0) rotate(-10deg) scaleY(0.95); } 
+      to { transform: translateY(-10px) rotate(8deg) scaleY(1.05); } 
+    }
+    
+    @keyframes jump { 
+      0% { transform: translateY(0); } 
+      40% { transform: translateY(-40px); } 
+      100% { transform: translateY(0); } 
+    }
+
+    /* Random Generated Items */
+    .random-item {
+      position: absolute;
+      font-size: 80px; 
+      line-height: 1;
+      filter: drop-shadow(0 15px 20px rgba(0,0,0,0.2));
+      transform: translate(-50%, -50%) scale(0) rotate(-20deg);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 4;
+      animation: float 2.5s infinite ease-in-out alternate;
+    }
+    .random-item.show {
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+    .random-item.collected {
+      transform: translate(-50%, -150%) scale(0) rotate(20deg);
+      opacity: 0;
+      transition: all 0.5s ease-out;
+    }
+
+    @keyframes float {
+      from { margin-top: 0px; }
+      to { margin-top: -12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="playground" id="playground"></div>
+
+  <!-- The Crawling Baby -->
+  <div id="baby-container">
+    <div class="baby-inner" id="baby-inner">
+      <!-- 完整的宝宝单图 -->
+      <img src="baby.png" alt="Baby" class="baby-image">
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="chat-container" id="chat-panel">
+    <div class="chat-header">专属 Me Agent ✦</div>
+    <div class="chat-messages" id="messages">
+      <div class="msg-row agent">
+        <!-- 头像：如果缺失 agent-avatar.png 会使用内置占位图 -->
+        <img src="agent-avatar.png" alt="Agent" class="avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjM1IiBjeT0iNDUiIHI9IjUiIGZpbGw9IiMzMzMiLz48Y2lyY2xlIGN4PSI2NSIgY3k9IjQ1IiByPSI1IiBmaWxsPSIjMzMzIi8+PHBhdGggZD0iTTQwLDYwIFE1MCw3MCA2MCw2MCIgc3Ryb2tlPSIjMzMzIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='">
+        <div class="bubble">你好！我是你的专属小助手。你可以向我发送消息，等待回复时宝宝会去寻找随机的好物哦~</div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="和 Agent 聊点什么..." autocomplete="off">
+      <button class="send-btn" id="send-btn">
+        <svg viewBox="0 0 24 24"><path d="M3.4 20.4l17.45-7.48a1 1 0 0 0 0-1.84L3.4 3.6a.99.99 0 0 0-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.06-.87.49-.87.99l.01 4.61c0 .71.73 1.2 1.39.92z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const items = [
+      { emoji: '👓', name: '眼镜' },
+      { emoji: '💻', name: 'Mac电脑' },
+      { emoji: '📱', name: 'iPhone' },
+      { emoji: '🥬', name: '青菜' },
+      { emoji: '🍎', name: '苹果' },
+      { emoji: '🧩', name: '积木玩具' }
+    ];
+
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const messages = document.getElementById('messages');
+    const babyContainer = document.getElementById('baby-container');
+    const babyInner = document.getElementById('baby-inner');
+    const playground = document.getElementById('playground');
+    const chatPanel = document.getElementById('chat-panel');
+
+    let currentItemEl = null;
+
+    // init baby pos to center left
+    let babyPos = { x: window.innerWidth * 0.3, y: window.innerHeight * 0.6 };
+    babyContainer.style.transform = `translate(${babyPos.x}px, ${babyPos.y}px)`;
+
+    function scrollToBottom() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addMessage(text, isUser = false) {
+      const row = document.createElement('div');
+      row.className = `msg-row ${isUser ? 'user' : 'agent'}`;
+      
+      let html = '';
+      if (!isUser) {
+        // Same fallback avatar
+        html += `<img src="agent-avatar.png" alt="Agent" class="avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjM1IiBjeT0iNDUiIHI9IjUiIGZpbGw9IiMzMzMiLz48Y2lyY2xlIGN4PSI2NSIgY3k9IjQ1IiByPSI1IiBmaWxsPSIjMzMzIi8+PHBhdGggZD0iTTQwLDYwIFE1MCw3MCA2MCw2MCIgc3Ryb2tlPSIjMzMzIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='">`;
+      }
+      html += `<div class="bubble">${text}</div>`;
+      row.innerHTML = html;
+      messages.appendChild(row);
+      scrollToBottom();
+      return row;
+    }
+
+    function showTyping() {
+      const row = document.createElement('div');
+      row.className = 'msg-row agent typing-row';
+      row.innerHTML = `
+        <img src="agent-avatar.png" alt="Agent" class="avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjM1IiBjeT0iNDUiIHI9IjUiIGZpbGw9IiMzMzMiLz48Y2lyY2xlIGN4PSI2NSIgY3k9IjQ1IiByPSI1IiBmaWxsPSIjMzMzIi8+PHBhdGggZD0iTTQwLDYwIFE1MCw3MCA2MCw2MCIgc3Ryb2tlPSIjMzMzIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg=='">
+        <div class="bubble typing">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>`;
+      messages.appendChild(row);
+      scrollToBottom();
+      return row;
+    }
+
+    function getValidRandomTarget() {
+      const panelRect = chatPanel.getBoundingClientRect();
+      let rx, ry, attempts = 0;
+      do {
+        // bounds: with margins to keep item visible
+        rx = 80 + Math.random() * (window.innerWidth - 160);
+        ry = 80 + Math.random() * (window.innerHeight - 160);
+        attempts++;
+        
+        // safe distance from chat box
+        if (rx < panelRect.left - 80 || rx > panelRect.right + 80 || 
+            ry < panelRect.top - 80 || ry > panelRect.bottom + 80) {
+          break;
+        }
+      } while (attempts < 50);
+      return { x: rx, y: ry };
+    }
+
+    // to prevent spamming
+    let isProcessing = false;
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text || isProcessing) return;
+
+      isProcessing = true;
+      addMessage(text, true);
+      input.value = '';
+      
+      const typingRow = showTyping();
+      
+      // Random item
+      const itemData = items[Math.floor(Math.random() * items.length)];
+      const target = getValidRandomTarget();
+      
+      // Spawn new item
+      if (currentItemEl) currentItemEl.remove();
+      const itemEl = document.createElement('div');
+      itemEl.className = 'random-item';
+      itemEl.textContent = itemData.emoji;
+      itemEl.style.left = target.x + 'px';
+      itemEl.style.top = target.y + 'px';
+      playground.appendChild(itemEl);
+      
+      // Trigger appear anim
+      requestAnimationFrame(() => {
+        setTimeout(() => { itemEl.classList.add('show'); }, 50);
+      });
+      currentItemEl = itemEl;
+
+      // Distance and animation duration
+      const dx = target.x - babyPos.x;
+      const dy = target.y - babyPos.y;
+      const dist = Math.hypot(dx, dy);
+      const speed = 250; // pixels per second
+      const duration = Math.max(1.5, Math.min(dist / speed, 3.5)); // max 3.5s
+
+      // Face the right direction
+      if (dx < 0) {
+        babyInner.style.transform = 'scaleX(-1)';
+      } else {
+        babyInner.style.transform = 'scaleX(1)';
+      }
+
+      // Add crawling state
+      babyContainer.style.transition = `transform ${duration}s linear`;
+      babyContainer.classList.add('crawling');
+      
+      // Target coordinate for the baby's center
+      // Offset so the item is next to baby, not exactly overlapped
+      const endX = target.x - (dx > 0 ? 30 : -30);
+      const endY = target.y + 10;
+
+      babyPos = { x: endX, y: endY };
+      babyContainer.style.transform = `translate(${endX}px, ${endY}px)`;
+
+      // Simulating Agent thought process tied to travel duration
+      setTimeout(() => {
+        babyContainer.classList.remove('crawling');
+        babyContainer.classList.add('celebrate');
+        
+        // Item collection animation
+        itemEl.classList.remove('show');
+        itemEl.classList.add('collected');
+
+        setTimeout(() => {
+          babyContainer.classList.remove('celebrate');
+          itemEl.remove();
+        }, 800);
+
+        // Agent completes typing
+        typingRow.remove();
+        addMessage(`宝宝给你带回了 ${itemData.name}！\n针对你的问题，这是我的思考与回复。`);
+        isProcessing = false;
+
+      }, duration * 1000);
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // ensure dynamic viewport resizing doesn't break positions totally
+    window.addEventListener('resize', () => {
+      if (babyPos.x > window.innerWidth) babyPos.x = window.innerWidth - 100;
+      if (babyPos.y > window.innerHeight) babyPos.y = window.innerHeight - 100;
+      babyContainer.style.transition = 'none'; // quick update
+      babyContainer.style.transform = `translate(${babyPos.x}px, ${babyPos.y}px)`;
+    });
+  </script>
+</body>
+</html>

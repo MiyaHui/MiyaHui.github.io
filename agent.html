@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Me Agent</title>
+    <style>
+        :root {
+            --primary-color: #6a82fb;
+            --secondary-color: #fc5c7d;
+            --bg-color: #f0f4f8;
+            --chat-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #333;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 聊天容器 */
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            height: 80vh;
+            background: var(--chat-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 100; /* 确保对话框在最上层 */
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .agent-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            /* 请将 'agent-avatar.png' 替换为您提供的第二张图片（Q版头像）的路径 */
+            background-image: url('agent-avatar.png'); 
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--primary-color);
+            background-color: #fff;
+        }
+
+        .header-info h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+        }
+
+        .header-info p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,0.2) transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+            background-color: #f1f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 10px rgba(106, 130, 251, 0.2);
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            outline: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(106, 130, 251, 0.1);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(106, 130, 251, 0.3);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(106, 130, 251, 0.4);
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            margin-left: 2px;
+        }
+
+        /* 动画元素层（放在聊天框下面，但是可见的） */
+        .animation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50; /* 低于聊天框 */
+        }
+
+        /* Q版物品 */
+        .q-item {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            animation: floatItem 2s ease-in-out infinite alternate;
+        }
+
+        .q-item.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Q版宝宝 */
+        .baby-character {
+            position: absolute;
+            width: 120px;
+            height: 140px;
+            transition: all 2s ease-in-out;
+            opacity: 0;
+            transform: translate(-150px, -150px); /* 初始在屏幕外 */
+        }
+
+        .baby-character.active {
+            opacity: 1;
+        }
+
+        /* 宝宝头部（用户提供的图片） */
+        .baby-head {
+            width: 90px;
+            height: 90px;
+            /* 请将 'baby-head.png' 替换为您提供的第一张图片（Q版宝宝头像）的路径 */
+            background-image: url('baby-head.png'); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: absolute;
+            top: 0;
+            left: 15px;
+            z-index: 3;
+            animation: bobHead 1s infinite alternate ease-in-out;
+        }
+
+        /* 自己画的Q版身体（爬行姿态） */
+        .baby-body {
+            position: absolute;
+            top: 70px;
+            left: 25px;
+            width: 70px;
+            height: 45px;
+            background-color: #a8d5e2; /* 浅蓝色连体衣 */
+            border-radius: 35px;
+            z-index: 2;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.05);
+        }
+
+        .baby-arm {
+            position: absolute;
+            width: 25px;
+            height: 15px;
+            background-color: #ffd8c4; /* 肤色 */
+            border-radius: 15px;
+            z-index: 1;
+        }
+
+        .baby-arm.left {
+            top: 85px;
+            left: 15px;
+            transform: rotate(-30deg);
+            animation: crawlLeftArm 0.5s infinite alternate;
+        }
+
+        .baby-arm.right {
+            top: 85px;
+            left: 70px;
+            transform: rotate(30deg);
+            animation: crawlRightArm 0.5s infinite alternate;
+        }
+
+        .baby-leg {
+            position: absolute;
+            width: 30px;
+            height: 18px;
+            background-color: #a8d5e2;
+            border-radius: 15px;
+            z-index: 1;
+        }
+
+        .baby-leg.left {
+            top: 100px;
+            left: 20px;
+            transform: rotate(-10deg);
+            animation: crawlLeftLeg 0.5s infinite alternate;
+        }
+
+        .baby-leg.right {
+            top: 100px;
+            left: 60px;
+            transform: rotate(10deg);
+            animation: crawlRightLeg 0.5s infinite alternate;
+        }
+
+        /* 打字指示器 */
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background-color: #f1f0f0;
+            border-radius: 20px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #888;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bobHead {
+            from { transform: translateY(0) rotate(-2deg); }
+            to { transform: translateY(-5px) rotate(2deg); }
+        }
+
+        @keyframes floatItem {
+            from { transform: translateY(0) scale(1); }
+            to { transform: translateY(-10px) scale(1.05); }
+        }
+
+        @keyframes crawlLeftArm {
+            from { transform: rotate(-30deg) translateX(0); }
+            to { transform: rotate(-50deg) translateX(-5px); }
+        }
+        @keyframes crawlRightArm {
+            from { transform: rotate(30deg) translateX(0); }
+            to { transform: rotate(50deg) translateX(5px); }
+        }
+        @keyframes crawlLeftLeg {
+            from { transform: rotate(-10deg) translateX(0); }
+            to { transform: rotate(-20deg) translateX(-5px); }
+        }
+        @keyframes crawlRightLeg {
+            from { transform: rotate(10deg) translateX(0); }
+            to { transform: rotate(20deg) translateX(5px); }
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        /* 抓取到的物品样式 */
+        .grabbed-item {
+            position: absolute;
+            top: 40px;
+            left: 80px;
+            font-size: 1.5rem;
+            z-index: 4;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 动画层 -->
+    <div class="animation-layer" id="animationLayer">
+        <!-- 宝宝角色 -->
+        <div class="baby-character" id="baby">
+            <div class="baby-head"></div>
+            <div class="baby-body"></div>
+            <div class="baby-arm left"></div>
+            <div class="baby-arm right"></div>
+            <div class="baby-leg left"></div>
+            <div class="baby-leg right"></div>
+            <div id="grabbedItem" class="grabbed-item"></div>
+        </div>
+        
+        <!-- 物品容器 -->
+        <div class="q-item" id="targetItem"></div>
+    </div>
+
+    <!-- 聊天框 -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="agent-avatar"></div>
+            <div class="header-info">
+                <h2>Me Agent</h2>
+                <p><span class="status-dot"></span> 在线并准备好协助</p>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message agent">
+                你好！我是你的专属 Me Agent。有什么我可以帮你的吗？😊
+            </div>
+            <!-- 打字指示器 -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="messageInput" placeholder="输入消息跟 Agent 对话..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const baby = document.getElementById('baby');
+        const targetItem = document.getElementById('targetItem');
+        const grabbedItem = document.getElementById('grabbedItem');
+
+        // Q版物品库 (emoji 形式呈现趣味性)
+        const items = ['👓', '💻', '📱', '🥬', '🍎', '🧩', '🧸', '🍼'];
+        
+        // 模拟 Agent 的回复库
+        const agentResponses = [
+            "收到你的消息啦！正在为你处理...",
+            "这是一个很好的问题，让我想想。",
+            "没问题，我已经把这个记录下来了。",
+            "哈哈，太有趣了！",
+            "根据我的分析，这确实是一个可行的方案。",
+            "马上为你执行这个任务！"
+        ];
+
+        let isAnimating = false;
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || isAnimating) return;
+
+            // 1. 添加用户消息
+            appendMessage(text, 'user');
+            messageInput.value = '';
+            
+            // 开始动画和等待回复的流程
+            startAgentProcess();
+        }
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            msgDiv.textContent = text;
+            
+            // 确保打字指示器始终在最底部
+            chatMessages.insertBefore(msgDiv, typingIndicator);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function startAgentProcess() {
+            isAnimating = true;
+            
+            // 显示打字指示器
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+
+            // 随机选择一个物品
+            const randomItem = items[Math.floor(Math.random() * items.length)];
+            
+            // 计算一个不会被聊天框完全遮挡的随机位置
+            // 假设聊天框在中间，我们尽量把物品放在四周
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            
+            let itemX, itemY;
+            // 简单逻辑：随机选择放在左边、右边、上边或下边的空隙
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) { // 左边
+                itemX = Math.random() * (winW * 0.15) + 50;
+                itemY = Math.random() * (winH - 100) + 50;
+            } else if (side === 1) { // 右边
+                itemX = winW - (Math.random() * (winW * 0.15)) - 100;
+                itemY = Math.random() * (winH - 100) + 50;
+            } else if (side === 2) { // 上边
+                itemX = Math.random() * (winW - 100) + 50;
+                itemY = Math.random() * (winH * 0.1) + 20;
+            } else { // 下边
+                itemX = Math.random() * (winW - 100) + 50;
+                itemY = winH - (Math.random() * (winH * 0.1)) - 80;
+            }
+
+            // 显示物品
+            targetItem.textContent = randomItem;
+            targetItem.style.left = `${itemX}px`;
+            targetItem.style.top = `${itemY}px`;
+            targetItem.classList.add('show');
+
+            // 宝宝从屏幕外爬向物品
+            baby.classList.add('active');
+            
+            // 设置宝宝的起始位置（随机边缘）
+            const startX = Math.random() > 0.5 ? -150 : winW + 50;
+            const startY = winH; 
+            
+            // 先瞬间移动到起始点（移除transition以防看到滑动）
+            baby.style.transition = 'none';
+            baby.style.transform = `translate(${startX}px, ${startY}px)`;
+            grabbedItem.textContent = ''; // 清空手上物品
+            
+            // 强制重绘
+            void baby.offsetWidth;
+            
+            // 恢复transition并爬向物品
+            baby.style.transition = 'all 2s ease-in-out';
+            
+            // 计算朝向，如果物品在左边，宝宝可能需要翻转
+            const isFacingLeft = startX > itemX;
+            const scaleX = isFacingLeft ? -1 : 1;
+            
+            // 爬行到物品旁边
+            setTimeout(() => {
+                baby.style.transform = `translate(${itemX - (isFacingLeft ? -50 : 50)}px, ${itemY - 50}px) scaleX(${scaleX})`;
+            }, 50);
+
+            // 模拟 Agent 思考和输出的时间 (约 3-4 秒)
+            const thinkTime = 3000 + Math.random() * 1000;
+            
+            setTimeout(() => {
+                // Agent 输出完成，宝宝拿到物品
+                
+                // 物品消失，出现在宝宝手上
+                targetItem.classList.remove('show');
+                grabbedItem.textContent = randomItem;
+                // 如果宝宝被翻转了，手上的物品也要反向翻转回来，保持正常显示
+                grabbedItem.style.transform = `scaleX(${scaleX})`;
+                
+                // 隐藏打字指示器
+                typingIndicator.style.display = 'none';
+                
+                // 添加 Agent 回复
+                const reply = agentResponses[Math.floor(Math.random() * agentResponses.length)];
+                appendMessage(reply, 'agent');
+                
+                // 宝宝带着物品爬走（离开屏幕）
+                setTimeout(() => {
+                    const exitX = isFacingLeft ? -200 : winW + 100;
+                    baby.style.transform = `translate(${exitX}px, ${startY}px) scaleX(${scaleX})`;
+                    
+                    // 动画完全结束后重置状态
+                    setTimeout(() => {
+                        baby.classList.remove('active');
+                        isAnimating = false;
+                    }, 2000);
+                }, 1000); // 拿到物品后开心停留1秒
+
+            }, thinkTime);
+        }
+    </script>
+</body>
+</html>
