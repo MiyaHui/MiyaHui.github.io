@@ -165,9 +165,39 @@
             z-index: 100;
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 1.5rem;
             mix-blend-mode: difference;
             color: #fff;
+        }
+
+        .nav-link {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            padding-bottom: 2px;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: currentColor;
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s ease;
+        }
+
+        .nav-link:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
         }
 
         .lang-toggle {
@@ -226,30 +256,78 @@
         /* --- 首页 Hero Section --- */
         .hero {
             height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            padding: 0 8vw;
+            position: relative;
+            gap: 4rem;
+        }
+
+        .hero-text {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 2rem;
-            position: relative;
         }
 
         .hero h1 {
             font-family: var(--font-serif);
-            font-size: 5rem;
+            font-size: 4.5rem;
             font-weight: 300;
             letter-spacing: -0.02em;
             margin-bottom: 1.5rem;
+            line-height: 1.05;
         }
 
         .hero p {
             font-family: var(--font-serif);
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-style: italic;
             color: var(--text-muted);
-            max-width: 600px;
-            line-height: 1.6;
+            max-width: 480px;
+            line-height: 1.7;
+        }
+
+        .hero-avatar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: heroFadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .hero-avatar img {
+            width: 100%;
+            max-width: 420px;
+            height: auto;
+            display: block;
+            /* subtle float */
+            animation: heroFadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) both,
+                       heroFloat 6s ease-in-out 1.8s infinite;
+        }
+
+        @keyframes heroFadeIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-10px); }
+        }
+
+        @media (max-width: 860px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 8rem 2rem 4rem;
+                height: auto;
+                min-height: 100vh;
+                gap: 3rem;
+            }
+            .hero-text { order: 2; align-items: center; }
+            .hero p { max-width: 100%; }
+            .hero-avatar { order: 1; }
+            .hero-avatar img { max-width: 260px; }
         }
 
         .agent-footnote {
@@ -323,6 +401,9 @@
             flex-direction: column;
             align-items: center;
             gap: 1rem;
+            pointer-events: none;
+            /* span both grid columns so it doesn't displace hero content */
+            grid-column: 1 / -1;
         }
 
         .scroll-line {
@@ -732,13 +813,217 @@
                 height: 85vh;
             }
         }
+
+        /* --- Experience / 成长经历 Section --- */
+        .experience-section {
+            padding: 15vh 2rem 20vh;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .experience-header {
+            text-align: center;
+            margin-bottom: 8rem;
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-left: 0;
+        }
+
+        /* 中轴线 */
+        .timeline-axis {
+            position: absolute;
+            left: 160px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--accent);
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 160px 1px 1fr;
+            gap: 0 0;
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        /* 时间标注（左侧） */
+        .timeline-date {
+            padding-right: 2.5rem;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 0.15rem;
+        }
+
+        .timeline-date-range {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            line-height: 1.6;
+        }
+
+        .timeline-duration {
+            font-family: var(--font-serif);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 0.3rem;
+        }
+
+        /* 时间轴节点与竖线（中轴） */
+        .timeline-spine {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .timeline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-color);
+            border: 2px solid var(--bg-color);
+            box-shadow: 0 0 0 1px var(--text-color);
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.4);
+        }
+
+        /* 竖线——长度由 JS 根据时间比例动态注入 */
+        .timeline-bar {
+            width: 2px;
+            background: linear-gradient(to bottom, var(--text-color) 0%, var(--accent) 100%);
+            flex: 1;
+            min-height: 40px;
+            opacity: 0.25;
+            transition: opacity 0.3s ease;
+        }
+
+        .timeline-item:hover .timeline-bar {
+            opacity: 0.6;
+        }
+
+        /* 内容区（右侧） */
+        .timeline-content {
+            padding: 0 0 5rem 2.5rem;
+        }
+
+        .timeline-role {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-company {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-tagline {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 1.8rem;
+            line-height: 1.5;
+        }
+
+        .timeline-responsibilities {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .timeline-resp-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .timeline-resp-group-title {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-color);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timeline-resp-group-title::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 1px;
+            background: var(--text-color);
+            opacity: 0.4;
+        }
+
+        .timeline-resp-items {
+            padding-left: 1.5rem;
+        }
+
+        .timeline-resp-item {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 0.4rem;
+            position: relative;
+        }
+
+        .timeline-resp-item::before {
+            content: '○';
+            position: absolute;
+            left: -1.2rem;
+            font-size: 0.6rem;
+            top: 0.3rem;
+            opacity: 0.4;
+        }
+
+        /* Education block  */
+        .timeline-item.education .timeline-dot {
+            background: var(--bg-color);
+            box-shadow: 0 0 0 1.5px var(--text-muted);
+        }
+
+        .timeline-item.education .timeline-role {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 700px) {
+            .timeline-axis { left: 100px; }
+            .timeline-item { grid-template-columns: 100px 1px 1fr; }
+            .timeline-role { font-size: 1.2rem; }
+        }
     </style>
 </head>
 
 <body data-lang="zh">
 
-    <!-- 导航：中英切换 -->
+    <!-- 导航：快速跳转 + 中英切换 -->
     <nav class="fixed-nav">
+        <a href="#portfolio" class="nav-link zh-only">作品集</a>
+        <a href="#portfolio" class="nav-link en-only">Portfolio</a>
+        <a href="#experience" class="nav-link zh-only">成长经历</a>
+        <a href="#experience" class="nav-link en-only">Experience</a>
         <div class="lang-toggle" onclick="toggleLanguage()">
             <span class="zh-only">EN</span>
             <span class="en-only">中文</span>
@@ -764,18 +1049,24 @@
 
     <!-- 首页 Hero -->
     <section class="hero">
-        <h1>
-            <span class="zh-only">Hi, I'm Miya</span>
-            <span class="en-only">Hi, I'm Miya</span>
-        </h1>
-        <p>
-            <span class="zh-only">I am a builder dedicated to giving AI a human touch. I transform cutting-edge
-                technology into warm, intuitive products through minimal design and elegant orchestration. Here are my
-                recent explorations.</span>
-            <span class="en-only">I am a builder dedicated to giving AI a human touch. I transform cutting-edge
-                technology into warm, intuitive products through minimal design and elegant orchestration. Here are my
-                recent explorations.</span>
-        </p>
+        <div class="hero-text">
+            <h1>
+                <span class="zh-only">Hi, I'm Miya</span>
+                <span class="en-only">Hi, I'm Miya</span>
+            </h1>
+            <p>
+                <span class="zh-only">I am a builder dedicated to giving AI a human touch. I transform cutting-edge
+                    technology into warm, intuitive products through minimal design and elegant orchestration. Here are my
+                    recent explorations.</span>
+                <span class="en-only">I am a builder dedicated to giving AI a human touch. I transform cutting-edge
+                    technology into warm, intuitive products through minimal design and elegant orchestration. Here are my
+                    recent explorations.</span>
+            </p>
+        </div>
+
+        <div class="hero-avatar">
+            <img src="selfie.png" alt="Miya — AI-Native Builder">
+        </div>
 
         <div class="scroll-indicator">
             <span class="zh-only">向下滑动</span><span class="en-only">Scroll</span>
@@ -784,7 +1075,7 @@
     </section>
 
     <!-- ==================== Index / 目录 ==================== -->
-    <section class="index-section">
+    <section class="index-section" id="portfolio">
         <div class="index-header">
             <span class="zh-only">作品总览</span>
             <span class="en-only">Index</span>
@@ -1267,6 +1558,178 @@
         </div>
     </section>
 
+    <!-- ==================== Experience / 成长经历 ==================== -->
+    <section class="experience-section" id="experience">
+        <div class="experience-header">
+            <div class="category-title" style="padding: 0;">
+                <h2>
+                    <span class="zh-only">成长经历</span>
+                    <span class="en-only">Experience</span>
+                </h2>
+                <p>
+                    <span class="zh-only">职业轨迹与技能积累</span>
+                    <span class="en-only">Career Timeline &amp; Growth</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="timeline-container">
+            <div class="timeline-axis"></div>
+
+            <!-- CIPPlanner 06/2023–09/2024 ≈ 15 months -->
+            <div class="timeline-item" data-months="15">
+                <div class="timeline-date">
+                    <div class="timeline-date-range">06/2023<br>09/2024</div>
+                    <div class="timeline-duration zh-only">1年3个月</div>
+                    <div class="timeline-duration en-only">15 months</div>
+                </div>
+                <div class="timeline-spine">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-bar"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-role zh-only">商业分析师</div>
+                    <div class="timeline-role en-only">Business Analyst</div>
+                    <div class="timeline-company">CIPPlanner Corporation</div>
+                    <div class="timeline-tagline zh-only">为资本改善项目交付企业级合同管理解决方案，服务15+客户，年度项目价值超500万美元</div>
+                    <div class="timeline-tagline en-only">Delivered enterprise contract management solutions for Capital Improvement Projects, serving 15+ clients with $5M+ annual project value</div>
+                    <ul class="timeline-responsibilities">
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">需求分析与方案设计</div>
+                            <div class="timeline-resp-group-title en-only">Requirement Analysis &amp; Solution Design</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">将业务需求转化为技术规格说明，设计原型图与流程图，优化建筑合同审批流程，将周转时间缩短30%</li>
+                                <li class="timeline-resp-item en-only">Translated business requirements into technical specifications, designing mockups and workflow diagrams to streamline approval processes for construction contracts, reducing turnaround time by 30%.</li>
+                                <li class="timeline-resp-item zh-only">编写全面的需求规格说明书（RSD），协调IT、法务及运营团队等多方干系人</li>
+                                <li class="timeline-resp-item en-only">Developed comprehensive requirement specification documents (RSD), aligning stakeholders across IT, legal, and operations teams.</li>
+                            </ul>
+                        </li>
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">敏捷项目交付</div>
+                            <div class="timeline-resp-group-title en-only">Agile Project Delivery</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">主导8+个系统版本的迭代规划与UAT策略，集成MS DevOps进行需求池管理与追溯，将缺陷解决时间缩短25%</li>
+                                <li class="timeline-resp-item en-only">Led sprint planning and UAT strategies for 8+ system releases, integrating MS DevOps for backlog prioritization and traceability, improving defect resolution time by 25%.</li>
+                                <li class="timeline-resp-item zh-only">统筹端到端验收测试，在上线前解决84%的关键缺陷</li>
+                                <li class="timeline-resp-item en-only">Led end-to-end acceptance testing, resolving 84% of critical bugs prior to deployment.</li>
+                            </ul>
+                        </li>
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">跨职能协作</div>
+                            <div class="timeline-resp-group-title en-only">Cross-Functional Collaboration</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">与开发团队协作优化SQL查询与API集成，提升合同系统与第三方平台间的数据同步效率</li>
+                                <li class="timeline-resp-item en-only">Partnered with developers to optimize SQL queries and API integrations, enhancing data synchronization between contract systems and third-party platforms.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 赛森科技 12/2020–04/2023 ≈ 28 months -->
+            <div class="timeline-item" data-months="28">
+                <div class="timeline-date">
+                    <div class="timeline-date-range">12/2020<br>04/2023</div>
+                    <div class="timeline-duration zh-only">2年4个月</div>
+                    <div class="timeline-duration en-only">28 months</div>
+                </div>
+                <div class="timeline-spine">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-bar"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-role zh-only">高级商业分析师</div>
+                    <div class="timeline-role en-only">Lead Business Analyst</div>
+                    <div class="timeline-company">广州赛森软件科技有限公司</div>
+                    <div class="timeline-tagline zh-only">服务于大型国有企业的SaaS解决方案提供商</div>
+                    <div class="timeline-tagline en-only">SaaS provider for major state-owned corporations</div>
+                    <ul class="timeline-responsibilities">
+                        <li class="timeline-resp-group">
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">主导SaaS平台智慧车队管理、智慧物业管理及员工服务业务的商业需求分析、产品架构与功能设计、流程优化、跨系统集成，推动项目实施与交付；根据业务调整制定产品路线图</li>
+                                <li class="timeline-resp-item en-only">Led business requirement analysis, product architecture and functional design, process optimization, cross-system integration, and driving project implementation and delivery for SaaS platform's Smart Fleet Management, Intelligent Property Management, and employee services; Developed product roadmaps based on business adjustments</li>
+                                <li class="timeline-resp-item zh-only">设计产品原型，完成需求规格说明书（RSD）及用户手册编写</li>
+                                <li class="timeline-resp-item en-only">Designed mockups, completed the requirement specification documents (RSD) and user manual writing</li>
+                                <li class="timeline-resp-item zh-only">主导项目验收测试、产品培训，收集用户反馈并推动功能迭代优化</li>
+                                <li class="timeline-resp-item en-only">Led project acceptance testing, product training, collecting user feedback, and driving functional iteration.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 力挚网络 11/2015–05/2020 ≈ 54 months -->
+            <div class="timeline-item" data-months="54">
+                <div class="timeline-date">
+                    <div class="timeline-date-range">11/2015<br>05/2020</div>
+                    <div class="timeline-duration zh-only">4年6个月</div>
+                    <div class="timeline-duration en-only">54 months</div>
+                </div>
+                <div class="timeline-spine">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-bar"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-role zh-only">流程改善专家</div>
+                    <div class="timeline-role en-only">Process Improvement Expert</div>
+                    <div class="timeline-company">广州力挚网络科技有限公司（租租车）</div>
+                    <ul class="timeline-responsibilities">
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">流程优化</div>
+                            <div class="timeline-resp-group-title en-only">Process Improvement</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">设计并优化所负责业务线的客服标准作业流程</li>
+                                <li class="timeline-resp-item en-only">Designed and optimized the customer service standard workflow for the responsible business line</li>
+                                <li class="timeline-resp-item zh-only">运用ECRS分析方法论，按场景整合优化服务标准流程，提升对应场景的处理效率</li>
+                                <li class="timeline-resp-item en-only">Applied ECRS analysis methodology to consolidate and optimize the service standard workflow according to the scenario, improving the processing efficiency of the corresponding scenario</li>
+                                <li class="timeline-resp-item zh-only">运用COE分析方法，定位重大客诉案例的根因，从服务、产品等多维度提供优化方案</li>
+                                <li class="timeline-resp-item en-only">Leveraged COE analysis to identify root causes of errors in major customer complaint cases and provided optimization solutions from different perspectives such as server and product</li>
+                            </ul>
+                        </li>
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">数据分析</div>
+                            <div class="timeline-resp-group-title en-only">Data Analysis</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">运用MySQL进行数据分层分析，识别关键指标并设计改进方案</li>
+                                <li class="timeline-resp-item en-only">Analyzed MySQL data by breaking down and analyzing online data layer by layer, identifying key indicators, and designing solutions to improve them</li>
+                                <li class="timeline-resp-item zh-only">使用Tableau进行数据可视化，呈现线上数据趋势与占比，辅助管理层决策</li>
+                                <li class="timeline-resp-item en-only">Created Tableau dashboards to visualize trends and proportions of online data to assist decision-making.</li>
+                            </ul>
+                        </li>
+                        <li class="timeline-resp-group">
+                            <div class="timeline-resp-group-title zh-only">项目管理</div>
+                            <div class="timeline-resp-group-title en-only">Project Management</div>
+                            <ul class="timeline-resp-items">
+                                <li class="timeline-resp-item zh-only">作为项目发起人，积累了项目进度管理经验</li>
+                                <li class="timeline-resp-item en-only">Developed expertise in project schedule management as the project initiator</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 教育 09/2012–06/2016 ≈ 45 months -->
+            <div class="timeline-item education" data-months="45">
+                <div class="timeline-date">
+                    <div class="timeline-date-range">09/2012<br>06/2016</div>
+                    <div class="timeline-duration zh-only">4年</div>
+                    <div class="timeline-duration en-only">4 years</div>
+                </div>
+                <div class="timeline-spine">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-bar" style="opacity:0;"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-role zh-only">通信工程 · 学士</div>
+                    <div class="timeline-role en-only">Bachelor of Communication Engineering</div>
+                    <div class="timeline-company zh-only">广东海洋大学 · 电子与信息工程学院</div>
+                    <div class="timeline-company en-only">College of Electronic &amp; Information Engineering, Guangdong Ocean University</div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
     <!-- ==================== My Philosophy / 洞察 ==================== -->
     <section class="philosophy-section">
         <div class="category-title" style="padding: 0;">
@@ -1313,6 +1776,20 @@
     </section>
 
     <script>
+        // Timeline bar height proportional to duration
+        (function() {
+            const items = document.querySelectorAll('.timeline-item[data-months]');
+            const maxMonths = Math.max(...Array.from(items).map(el => parseInt(el.dataset.months)));
+            items.forEach(item => {
+                const months = parseInt(item.dataset.months);
+                const ratio = months / maxMonths;
+                const minH = 80, maxH = 420;
+                const h = Math.round(minH + (maxH - minH) * ratio);
+                const bar = item.querySelector('.timeline-bar');
+                if (bar && !bar.style.opacity) bar.style.height = h + 'px';
+            });
+        })();
+
         // 中英文切换逻辑
         function toggleLanguage() {
             const body = document.body;
